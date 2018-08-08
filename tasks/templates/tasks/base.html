@@ -1,0 +1,98 @@
+{% load static %} {% load humanize %} {% csrf_token %}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>{% block title %}{% endblock %}</title>
+
+    <!-- Bootstrap Core CSS -->
+    <link href="{% static 'tasks/vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
+
+    <!-- MetisMenu CSS -->
+    <link href="{% static 'tasks/vendor/metisMenu/metisMenu.min.css' %}" rel="stylesheet">
+
+    <!-- Custom CSS -->
+    <link href="{% static 'tasks/vendor/dist/css/sb-admin-2.css' %}" rel="stylesheet">
+
+    <!-- Morris Charts CSS -->
+    <link href="{% static 'tasks/vendor/morrisjs/morris.css' %}" rel="stylesheet">
+
+    <!-- Custom Fonts -->
+    <link href="{% static 'tasks/vendor/font-awesome/css/font-awesome.min.css' %}" rel="stylesheet" type="text/css">
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+    <!-- jQuery -->
+    <script src="{% static 'tasks/vendor/jquery/jquery.min.js' %}"></script>
+
+    <!-- Bootstrap Core JavaScript -->
+    <script src="{% static 'tasks/vendor/bootstrap/js/bootstrap.min.js' %}"></script>
+
+    <!-- Metis Menu Plugin JavaScript -->
+    <script src="{% static 'tasks/vendor/metisMenu/metisMenu.min.js' %}"></script>
+
+    <!-- Morris Charts JavaScript -->
+    <script src="{% static 'tasks/vendor/raphael/raphael.min.js' %}"></script>
+    <script src="{% static 'tasks/vendor/morrisjs/morris.min.js' %}"></script>
+    <script src="{% static 'tasks/vendor/data/morris-data.js' %}"></script>
+
+    <!-- Custom Theme JavaScript -->
+    <script src="{% static 'tasks/vendor/dist/js/sb-admin-2.js' %}"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.0.11/handlebars.min.js"></script>
+
+    <!-- Custom JavaScript -->
+    <script src="{% static 'tasks/index.js' %}"></script>
+
+    <script id="new_task_template" type="text/template">
+        {% verbatim  newtaskblock  %}
+        <!---------New Task Creation------------- -->
+            <input name="projectid_new" type="hidden" value="{{projectid}}" required/>
+            <input name="bucketid_new" type="hidden" value="{{bucketid}}" required/>
+            <div class="panel panel-default">
+                <div class="panel-heading" data-toggle="collapse" data-parent="#bucketBody_{{bucketid}}" href="#taskBody_new" aria-expanded="true">
+                    <input class="form-control form-control-sm" name="title_new" type="text" placeholder="Title" required/>
+                </div>
+                <!-- /.panel-heading -->
+                <div class="panel-body" id="taskBody_new">
+                    <textarea type="text" name="desc_new" class="form-control" placeholder="Description" rows="3" required></textarea>
+                </div>
+                <!-- /.panel-body -->
+                <div class="panel-footer">
+                    Assigned To:
+                    <select name="assign_new" class="form-control form-control-sm">
+                        {{#each teammembers }}
+                        <option value="{{userid}}">{{username}}</option>
+                        {{/each}}
+                    </select>
+                    Due-Date:
+                    <input class="form-control form-control-sm" name="duedate_new" type="date" required/>
+                    <div class="pull-right">
+                        <button type="submit" class="btn btn-primary btn-xs task_create"><i class="fa fa-save px-2"></i> Create </button>
+                    </div>
+                </div>
+            </div>
+        <!-- /.Task form -->
+        {% endverbatim  newtaskblock  %}
+    </script>
+
+</head>
+
+<body>
+    {% block body %}{% endblock %}
+
+</body>
+
+</html>
