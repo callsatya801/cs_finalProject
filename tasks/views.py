@@ -138,7 +138,7 @@ def home_view(request):
 
     #print(f"Personal Tasks: {p_tasks_stat}")
     #print(f"Team Tasks: {t_tasks_stat}")
-    context= {'projectDict':projectDict, 'user':request.user.username,
+    context= {'projectDict':projectDict, 'user':request.user.get_full_name(),
                 'l_act_p_count':l_act_p_count,'l_act_t_count':l_act_t_count,
                 'l_arch_p_count':l_arch_p_count,'l_arch_t_count':l_arch_t_count
                ,'l_p_task_count':l_p_task_count,'l_t_task_count':l_t_task_count
