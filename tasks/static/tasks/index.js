@@ -1,6 +1,49 @@
 document.addEventListener('DOMContentLoaded', () =>
 {
 
+     // Adding Team members to the Project
+     $('#addTeam').on('show.bs.modal', function (event) {
+      var button = $(event.relatedTarget); // Button that triggered the modal
+      var recipient = button.data('projname'); // Extract info from data-* attributes
+      var modal = $(this);
+      modal.find('.modal-title').text(`Project:${recipient}`);
+
+      var MembersArea = document.querySelector('#MembersArea');
+      var MembersAreaChild = document.querySelector('#MembersAreaChild');
+      if (MembersAreaChild)
+       {
+          MembersAreaChild.remove() ;
+       }
+       MembersAreaChild = document.createElement("div");
+       MembersAreaChild.setAttribute("id","MembersAreaChild");
+       MembersArea.appendChild(MembersAreaChild);
+       //MembersArea.innerHTML='<strong>Available list of members to select from:</strong>';
+
+       var userlist =  button.data('allusers');
+       console.log(userlist)
+      for(var idx =0; idx < userlist.length; idx++)
+              {
+                console.log(userlist[idx][2]);
+                var seperator = document.createElement('div');
+                var checkbox = document.createElement('input');
+                var label = document.createElement('label');
+                checkbox.type = "checkbox";
+                checkbox.name = "tmember";
+                checkbox.className = "c_tmember";
+                checkbox.value = userlist[idx][0];
+                checkbox.id = userlist[idx][0];
+                label.htmlFor = userlist[idx][0];
+                label.innerText = userlist[idx][2];
+                console.log(label);
+                console.log(checkbox);
+                seperator.appendChild(checkbox);
+                seperator.appendChild(label);
+                console.log(seperator)
+                MembersAreaChild.appendChild(seperator);
+              }
+    });
+
+
     // Template for new Task
     const new_task_template = Handlebars.compile(document.querySelector('#new_task_template').innerHTML);
 
@@ -31,6 +74,18 @@ document.addEventListener('DOMContentLoaded', () =>
           var edit_element = document.querySelector(`#task_edit_${taskid}`);
           if (ro_element) ro_element.style.display = "none";
           if (edit_element) edit_element.style.display = "block";
+
+          };
+      });
+
+    // Each Task edit button change it to edit mode
+    document.querySelectorAll('.task_edit_cancel_btn').forEach(button => {
+      button.onclick = () => {
+          const taskid = button.dataset.taskid;
+          var ro_element = document.querySelector(`#task_ro_${taskid}`);
+          var edit_element = document.querySelector(`#task_edit_${taskid}`);
+          if (ro_element) ro_element.style.display = "block";
+          if (edit_element) edit_element.style.display = "none";
 
           };
       });

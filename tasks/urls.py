@@ -12,6 +12,8 @@ urlpatterns = [
     path("movetask", views.movetask, name="movetask"),
     path("createtask", views.createtask, name="createtask"),
     path("createproject", views.createproject, name="createproject"),
+    path("addteam", views.addteam, name="addteam"),
+    path("archive", views.archive, name="archive"),
     path("<int:projectid>/project", views.project, name="project"),
 
     #path("", views.index, name="index"),

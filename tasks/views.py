@@ -127,7 +127,11 @@ def home_view(request):
 
     l_p_task_count = Task.objects.filter(project__in= Project.objects.filter(userproject__user = request.user, p_type='P', status='A')).count()
     l_t_task_count = Task.objects.filter(project__in= Project.objects.filter(userproject__user = request.user, p_type='T', status='A')).count()
+
+    l_ap_task_count = Task.objects.filter(project__in= Project.objects.filter(userproject__user = request.user, p_type='P', status='D')).count()
+    l_at_task_count = Task.objects.filter(project__in= Project.objects.filter(userproject__user = request.user, p_type='T', status='D')).count()
     #print(f"testing if this is working {l_p_task_count}:{l_t_task_count}")
+
 
     p_tasks_stat = Task.objects.filter(project__in= Project.objects.filter(userproject__user = request.user, p_type='P', status='A')).values('bucket__name').annotate(entries=Count('id')).order_by('bucket__seq')
     t_tasks_stat = Task.objects.filter(project__in= Project.objects.filter(userproject__user = request.user, p_type='T', status='A')).values('bucket__name').annotate(entries=Count('id')).order_by('bucket__seq')
@@ -139,6 +143,8 @@ def home_view(request):
                 'l_arch_p_count':l_arch_p_count,'l_arch_t_count':l_arch_t_count
                ,'l_p_task_count':l_p_task_count,'l_t_task_count':l_t_task_count
                , 'l_act_tot_count':l_act_p_count+l_act_t_count
+               ,'l_ap_task_count':l_ap_task_count
+               ,'l_at_task_count':l_at_task_count
     }
 
     return render(request, "tasks/home.html", context)
@@ -235,7 +241,7 @@ def project(request, projectid):
     teammembers = UserProject.objects.filter(project=selProject)
     l_teammembers = []
     for teammember in teammembers:
-        l_teammembers.append({'userid':teammember.user.id, 'username':teammember.user.username})
+        l_teammembers.append({'userid':teammember.user.id, 'username':teammember.user.username, 'firstname':teammember.user.first_name})
 
     # Get - Buckets for a selected project - order by bucket seq
     buckets = Bucket.objects.filter(project=selProject).order_by('seq')
@@ -248,16 +254,25 @@ def project(request, projectid):
         bTaskDict[bkt.name]=[]
         for task in tasks:
             taskJson = {'id':task.id, 'title':task.title, 'description':task.description, 'owner':task.owner.get_username(),
-              'dueDate': task.dueDate, 'assignedTo':task.assignedTo.get_username()}
+              'owner_firstname':task.owner.get_short_name(),
+              'dueDate': task.dueDate, 'assignedTo':task.assignedTo.get_username(), 'assignedTo_firstname':task.assignedTo.get_short_name()}
             bTaskDict[bkt.name].append(taskJson)
 
     bTaskDict = json.dumps(bTaskDict, cls=DjangoJSONEncoder)
     #print(f"{bTaskDict}")
 
+    users = User.objects.all().values_list('id','username', 'first_name', 'last_name').order_by('first_name')
+    userslist= json.dumps(list(users), cls=DjangoJSONEncoder)
+
+    print(f"{userslist}")
+
     context= {'projectDict':projectDict, 'buckets':buckets, 'bTaskDict':json.loads(bTaskDict)
-               , 'user':request.user.username, 'currentProject':selProject
+               , 'user':request.user.get_full_name(), 'currentProject':selProject
+               , 'user_short':request.user.get_short_name
                ,'QO_teammembers': teammembers
-               , 'teammembers':json.dumps(l_teammembers), 'task_creation':data}
+               , 'teammembers':json.dumps(l_teammembers), 'task_creation':data
+               , 'all_users':userslist
+    }
     return render(request, "tasks/index.html", context)
 
 def updatetask(request):
@@ -364,3 +379,59 @@ def createtask(request):
         return HttpResponseRedirect(reverse(f"project" , args=(l_projectid,)))
     else:
         return HttpResponseRedirect(reverse(f"home"))
+
+
+
+def addteam(request):
+
+    if request.method == 'POST':
+        l_projectid = int(request.POST["projectid"])
+        l_project_obj = Project.objects.get(pk=l_projectid)
+        userlist = request.POST.getlist('tmember')
+        print(f"Userlist: {userlist}")
+        for user in userlist:
+            try:
+                print(f"user ID:{user}")
+                l_user=User.objects.get(pk=user)
+                user_proj = UserProject.objects.get(user=l_user,project=l_project_obj)
+            except:
+                p_user = UserProject(user=User.objects.get(pk=user), project=l_project_obj, role='M')
+                p_user.save()
+
+        data =  {'success':True, 'message':f"Team members added successfully "}
+        request.task_create = data
+        request.session['task_creation'] = data
+        return HttpResponseRedirect(reverse(f"project" , args=(l_projectid,)))
+
+    else:
+        return HttpResponseRedirect(reverse(f"home"))
+
+
+def archive(request):
+
+    if request.method == 'POST':
+        l_projectid = int(request.POST["projectid"])
+        l_status = request.POST["status"]
+
+        project = Project.objects.filter(pk=l_projectid)
+
+        print(f" archiving ProjectID:{l_projectid}")
+        if project:
+            project.update(status=l_status)
+            if l_status == 'D':
+                data =  {'success':True, 'message':f"Project Archived Successfully !! "}
+            else:
+                data =  {'success':True, 'message':f"Project Activated Successfully !! "}
+        else:
+            if l_status == 'D':
+                data =  {'success':False, 'message':f"Unable to Archive Project :( "}
+            else:
+                data =  {'success':False, 'message':f"Unable to Activate Project :( "}
+
+        request.task_create = data
+        request.session['task_creation'] = data
+        return HttpResponseRedirect(reverse(f"project" , args=(l_projectid,)))
+
+    else:
+        return HttpResponseRedirect(reverse(f"home"))
+

@@ -20,9 +20,6 @@
                     <strong> {{user}} </strong> <i class="fa fa-user fa-fw"></i> <i class="fa fa-caret-down"></i>
                 </a>
                 <ul class="dropdown-menu dropdown-user">
-                    <li><a href="#"><i class="fa fa-user fa-fw"></i> User Profile</a>
-                    </li>
-                    <li class="divider"></li>
                     <li><a href="{% url 'logout' %}"><i class="fa fa-sign-out fa-fw"></i> Logout</a>
                     </li>
                 </ul>
@@ -91,7 +88,7 @@
                     <li>
                         <a href="#"><i class="fa fa-group fa-fw"></i> Team<span class="fa arrow"></span></a>
                         <ul class="nav nav-second-level">
-                            {% for proj in projectDict.Archive_Personal %}
+                            {% for proj in projectDict.Archive_Team %}
                             <li>
                                 <a data-projectid="{{ proj.id }}" href="{% url 'project'  proj.id  %}">{{proj.name}}</a>
                             </li>
@@ -111,19 +108,19 @@
     </nav>
 
     <div id="page-wrapper">
-            {%if l_act_tot_count == 0 %}
-        <div class="container" >
-     <div class="jumbotron jumbotron-fluid text-center" style="margin-top:10px;">
-          <h1 class="display-4">Welcome to Simple Planner !</h1>
-          <p class="lead">This is a simple planning tool that enables users and teams to create plans, assemble and assign tasks and collaborate with other users</p>
-          <hr class="my-4">
-          <p>Create your Personal or Team Task list NOW</p>
-          <p class="lead">
-            <a class="btn btn-primary btn-lg" href="{% url 'createproject' %}" role="button">Create</a>
-          </p>
+        {%if l_act_tot_count == 0 %}
+        <div class="container">
+            <div class="jumbotron jumbotron-fluid text-center" style="margin-top:10px;">
+                <h1 class="display-4">Welcome to Simple Planner !</h1>
+                <p class="lead">This is a simple planning tool that enables users and teams to create plans, assemble and assign tasks and collaborate with other users</p>
+                <hr class="my-4">
+                <p>Create your Personal or Team Task list NOW</p>
+                <p class="lead">
+                    <a class="btn btn-primary btn-lg" href="{% url 'createproject' %}" role="button">Create</a>
+                </p>
+            </div>
         </div>
-        </div>
-    {% else %}
+        {% else %}
 
         <div class="row">
             <div class="col-lg-12">
@@ -175,6 +172,50 @@
             </div>
         </div>
 
+        <!-- /.row -->
+        <div class="row">
+            <div class="col-lg-6 col-md-6">
+                <div class="panel panel-secondary">
+                    <div class="panel-heading">
+                        <div class="row">
+                            <div class="col-xs-2">
+                                <i class="fa fa-archive fa-5x"></i>
+                                <div>Archive Projects</div>
+                            </div>
+                            <div class="col-xs-5 text-right">
+                                <div class="huge">{{l_arch_p_count}}</div>
+                                <div>Personal</div>
+                            </div>
+                            <div class="col-xs-5 text-left">
+                                <div class="huge">{{l_arch_t_count}}</div>
+                                <div>Team</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6 col-md-6">
+                <div class="panel panel-secondary">
+                    <div class="panel-heading">
+                        <div class="row">
+                            <div class="col-xs-2">
+                                <i class="fa fa-tasks fa-5x"></i>
+                                <div>Archive Tasks</div>
+                            </div>
+                            <div class="col-xs-5 text-right">
+                                <div class="huge">{{l_ap_task_count}}</div>
+                                <div>Personal</div>
+                            </div>
+                            <div class="col-xs-5 text-left">
+                                <div class="huge">{{l_at_task_count}}</div>
+                                <div>Team</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="row">
             <div class="col-lg-6 col-md-6">
                 <!-- /.panel -->
@@ -217,6 +258,4 @@
         </div>
 
     </div>
-    {% endif %}
-
-    {% endblock %}
+    {% endif %} {% endblock %}

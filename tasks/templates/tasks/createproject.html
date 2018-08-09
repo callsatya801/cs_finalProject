@@ -20,9 +20,6 @@
                     <strong> {{user}} </strong> <i class="fa fa-user fa-fw"></i> <i class="fa fa-caret-down"></i>
                 </a>
                 <ul class="dropdown-menu dropdown-user">
-                    <li><a href="#"><i class="fa fa-user fa-fw"></i> User Profile</a>
-                    </li>
-                    <li class="divider"></li>
                     <li><a href="{% url 'logout' %}"><i class="fa fa-sign-out fa-fw"></i> Logout</a>
                     </li>
                 </ul>
@@ -91,7 +88,7 @@
                     <li>
                         <a href="#"><i class="fa fa-group fa-fw"></i> Team<span class="fa arrow"></span></a>
                         <ul class="nav nav-second-level">
-                            {% for proj in projectDict.Archive_Personal %}
+                            {% for proj in projectDict.Archive_Team %}
                             <li>
                                 <a data-projectid="{{ proj.id }}" href="{% url 'project'  proj.id  %}">{{proj.name}}</a>
                             </li>

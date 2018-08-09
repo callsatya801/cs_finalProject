@@ -1,6 +1,37 @@
 {% extends "tasks/base.html" %} {% block title %} Simple Planner {% endblock %} {% block body %}
-<div id="wrapper">
 
+<div class="modal fade" id="addTeam" tabindex="-1" role="dialog" aria-labelledby="Teammembers" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Project:</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form action="{% url 'addteam' %}" method="post">
+            {% csrf_token %}
+            <div class="modal-body">
+                <div class="form-group">
+                        <input id="projectid" name="projectid" value={{currentProject.id}} type="hidden">
+                    </div>
+                    <div id="MembersArea">
+                        <div id="MembersAreaChild">
+                        </div>
+                    </div>
+            </div>
+            <div class="modal-footer">
+                <input id="addTeamtbtn" value="Add Team to Project" type="submit" class="btn btn-primary">
+            </div>
+            </form>
+        </div>
+    </div>
+</div>
+<!--Modal -->
+
+
+
+<div id="wrapper">
     <!-- Navigation -->
     <nav class="navbar navbar-default navbar-static-top" role="navigation" style="margin-bottom: 0">
         <div class="navbar-header">
@@ -20,9 +51,6 @@
                     <strong> {{user}} </strong> <i class="fa fa-user fa-fw"></i> <i class="fa fa-caret-down"></i>
                 </a>
                 <ul class="dropdown-menu dropdown-user">
-                    <li><a href="#"><i class="fa fa-user fa-fw"></i> User Profile</a>
-                    </li>
-                    <li class="divider"></li>
                     <li><a href="{% url 'logout' %}"><i class="fa fa-sign-out fa-fw"></i> Logout</a>
                     </li>
                 </ul>
@@ -91,7 +119,7 @@
                     <li>
                         <a href="#"><i class="fa fa-group fa-fw"></i> Team<span class="fa arrow"></span></a>
                         <ul class="nav nav-second-level">
-                            {% for proj in projectDict.Archive_Personal %}
+                            {% for proj in projectDict.Archive_Team %}
                             <li>
                                 <a data-projectid="{{ proj.id }}" href="{% url 'project'  proj.id  %}">{{proj.name}}</a>
                             </li>
@@ -113,7 +141,31 @@
     <div id="page-wrapper">
         <div class="row">
             <div class="col-lg-12">
-                <h3 class="page-header">{{currentProject.name}}</h3>
+                <form id="archive_{{bucket.id}}" action="{% url 'archive' %}" method="post">
+                            {% csrf_token %}
+
+                <h3 class="page-header">{{currentProject.name}}
+
+                <div class="pull-right">
+                {% if  currentProject.p_type == 'T' %}
+                    <button type="button" class="btn btn-primary add_team_bttn px-2"
+                    data-projname="{{currentProject.name}}" data-projectid="{{currentProject.id}}"
+                    data-teammembers="{{teammembers}}"
+                    data-allusers ="{{all_users}}"
+                    data-target="#addTeam" data-toggle="modal"><i class="fa fa-group px-2"></i> Add/View your Team</button>
+                {% endif %}
+                    <input name="projectid" type="hidden" value="{{currentProject.id}}" required/>
+                    {% if currentProject.status == 'A' %}
+                    <input name="status" type="hidden" value="D" required/>
+                    <button type="submit" class="btn btn-primary"><i class="fa fa-archive px-2"></i> Archive your Project</button>
+                    {% else %}
+                    <input name="status" type="hidden" value="A" required/>
+                    <button type="submit" class="btn btn-primary"><i class="fa fa-folder-open px-2"></i> Activate your Project</button>
+                    {% endif %}
+                </div>
+                </h3>
+                </form>
+
                 <div id="pg_msg_area">
                     {% if task_creation %} {% if task_creation.success %}
                     <div id="msg_succ" class="alert alert-success" role="alert">
@@ -135,9 +187,11 @@
                 <div class="panel panel-primary">
                     <div class="panel-heading" data-toggle="collapse" data-parent="#bucketAccordion_{{bucket.id}}" href="#bucketBody_{{bucket.id}}" aria-expanded="true">
                         <i class="fa fa-tasks fa-fw"></i> {{bucket.name}}
+                        {% if currentProject.status == 'A' %}
                         <div class="pull-right">
                             <button type="button" class="btn btn-default btn-xs add_task_bttn" data-projectid="{{currentProject.id}}" data-bucketid="{{bucket.id}}" data-teammembers="{{teammembers}}"><i class="fa fa-plus px-2"></i> Add Task </button>
                         </div>
+                        {% endif %}
                     </div>
                     <!-- /.panel-heading -->
                     <div class="panel-body" id="bucketBody_{{bucket.id}}">
@@ -163,16 +217,17 @@
                                             {% if currentProject.p_type == 'T' %}
                                             Assigned To:
                                             <select name="assignto_{{task.id}}" id="assignto_{{task.id}}" class="form-control form-control-sm">
-                                                {% for assign in QO_teammembers %} {% if assign.user.username == task.assignedTo %}
-                                                <option value="{{assign.user.id}}" selected>{{assign.user.username}}</option>
+                                                {% for assign in QO_teammembers %} {% if assign.user.first_name == task.assignedTo_firstname %}
+                                                <option value="{{assign.user.id}}" selected>{{assign.user.first_name}}</option>
                                                 {% else %}
-                                                <option value="{{assign.user.id}}" selected>{{assign.user.username}}</option>
+                                                <option value="{{assign.user.id}}" selected>{{assign.user.first_name}}</option>
                                                 {% endif %} {% endfor %}
                                             </select>
                                             {% endif %}
                                             Due-Date:
                                             <input class="form-control form-control-sm" name="duedate_{{task.id}}" id="duedate_{{task.id}}" type="date" value="{{task.dueDate}}" required/>
                                             <div class="pull-right">
+                                                <button data-taskid={{task.id}} type="button" class="btn btn-warning btn-xs task_edit_cancel_btn"><i class="fa fa-undo px-2"></i> Cancel </button>
                                                 <button type="submit" class="btn btn-primary btn-xs task_save" data-taskid="{{task.id}}"><i class="fa fa-save px-2"></i> Save </button>
                                             </div>
                                         </div>
@@ -185,8 +240,9 @@
                                     <div class="panel-heading" data-toggle="collapse" data-parent="#bucketBody_{{bucket.id}}" href="#taskBody_{{task.id}}" aria-expanded="true">
                                         <div> {{task.title}}
                                             <div class="pull-right">
+                                                {% if currentProject.status == 'A' %}
                                                 <button data-taskid={{task.id}} type="button" class="btn btn-primary btn-xs task_edit_btn"><i class="fa fa-edit px-2"></i></button>
-                                                {%if task.owner == user %}
+                                                {%if task.owner_firstname == user_short %}
                                                 <button type="button" data-title="{{task.title}}" data-taskid={{task.id}} class="btn btn-danger btn-xs task_remove_btn"><i class="fa fa-times px-2"></i></button>
                                                 {% endif %}
                                                 <div class="btn-group">
@@ -201,7 +257,7 @@
                                                         {% endif %} {% endfor %}
                                                     </ul>
                                                 </div>
-
+                                                {% endif %}
                                             </div>
                                         </div>
                                     </div>
@@ -212,7 +268,7 @@
                                     <!-- /.panel-body -->
                                     <div class="panel-footer" id="task_ro_footer_{{task.id}}">
                                         {% if currentProject.p_type == 'T' %}
-                                        Assigned To: <strong>{{task.assignedTo}}</strong>
+                                        Assigned To: <strong>{{task.assignedTo_firstname}}</strong>
                                         {% endif %}
 
                                         {% if task.dueDate %} Due-Date: <strong>{{task.dueDate}}</strong> {% endif %}
