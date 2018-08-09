@@ -99,7 +99,13 @@ document.addEventListener('DOMContentLoaded', () =>
           var ro_element = document.querySelector(`#task_ro_${taskid}`);
           var edit_element = document.querySelector(`#task_edit_${taskid}`);
 
-          if (ro_element) ro_element.remove();
+          if (ro_element)
+          {
+            ro_element.style.animationPlayState = 'running';
+            ro_element.addEventListener('animationend', () =>  {
+                        ro_element.remove();
+                    });
+          }
           if (edit_element) edit_element.remove();
 
           // POST the taskID to remove

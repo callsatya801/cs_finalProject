@@ -196,7 +196,7 @@
                     <!-- /.panel-heading -->
                     <div class="panel-body" id="bucketBody_{{bucket.id}}">
                         {% for key, tasks in bTaskDict.items %} {%if key == bucket.name %} {% for task in tasks %}
-                            <div id="move_whole_task_{{task.id}}">
+                            <div id="move_whole_task_{{task.id}}" class="move_whole_task">
                                 <form id="task_edit_form_{{task.id}}" action="{% url 'updatetask' %}" method="post">
                                     {% csrf_token %}
                                     <!-- /.task_edit -->

@@ -215,7 +215,49 @@
                 </div>
             </div>
         </div>
-
+            <div class="row">
+                <div class="col-lg-6">
+                    <div class="panel panel-primary">
+                        <div class="panel-heading">
+                             Personal Projects Stats
+                        </div>
+                        <!-- /.panel-heading -->
+                        <div class="panel-body">
+                            <table class="table table-striped">
+                               <tbody>
+                                   {% for t_tasks in p_tasks_stat  %}
+                                   <tr>
+                                      <th scope="row">{{t_tasks.bucket__name}}</th>
+                                      <td>{{t_tasks.entries}}</td>
+                                   {% endfor %}
+                               </tbody>
+                             </table>
+                        </div>
+                        <!-- /.panel-body -->
+                    </div>
+					</div>
+                    <!-- /.panel -->
+					<div class="col-lg-6">
+                    <div class="panel panel-primary">
+                        <div class="panel-heading">
+                             Team Projects Stats
+                        </div>
+                        <!-- /.panel-heading -->
+                        <div class="panel-body">
+                             <table class="table table-striped">
+                               <tbody>
+                                   {% for t_tasks in t_tasks_stat  %}
+                                   <tr>
+                                      <th scope="row">{{t_tasks.bucket__name}}</th>
+                                      <td>{{t_tasks.entries}}</td>
+                                   {% endfor %}
+                               </tbody>
+                             </table>
+                            </div>
+                        <!-- /.panel-body -->
+                    </div>
+					</div>
+                </div>
 
     </div>
     {% endif %} {% endblock %}

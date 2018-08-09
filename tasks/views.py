@@ -136,8 +136,8 @@ def home_view(request):
     p_tasks_stat = Task.objects.filter(project__in= Project.objects.filter(userproject__user = request.user, p_type='P', status='A')).values('bucket__name').annotate(entries=Count('id')).order_by('bucket__seq')
     t_tasks_stat = Task.objects.filter(project__in= Project.objects.filter(userproject__user = request.user, p_type='T', status='A')).values('bucket__name').annotate(entries=Count('id')).order_by('bucket__seq')
 
-    #print(f"Personal Tasks: {p_tasks_stat}")
-    #print(f"Team Tasks: {t_tasks_stat}")
+    print(f"Personal Tasks: {p_tasks_stat}")
+    print(f"Team Tasks: {t_tasks_stat}")
     context= {'projectDict':projectDict, 'user':request.user.get_full_name(),
                 'l_act_p_count':l_act_p_count,'l_act_t_count':l_act_t_count,
                 'l_arch_p_count':l_arch_p_count,'l_arch_t_count':l_arch_t_count
@@ -145,6 +145,8 @@ def home_view(request):
                , 'l_act_tot_count':l_act_p_count+l_act_t_count
                ,'l_ap_task_count':l_ap_task_count
                ,'l_at_task_count':l_at_task_count
+               ,'p_tasks_stat':p_tasks_stat
+               ,'t_tasks_stat':t_tasks_stat
     }
 
     return render(request, "tasks/home.html", context)
