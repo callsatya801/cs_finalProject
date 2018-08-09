@@ -52,6 +52,98 @@ def register_view(request):
         return render(request, "tasks/register.html",context)
 
 
+def createproject(request):
+
+    context = {}
+    if request.method == 'POST':
+        ptitle = request.POST["ptitle"]
+        ptype = request.POST["ptype"]
+
+        # Check if same project Name exists for the user
+        proj = Project.objects.filter(name=ptitle)
+        if proj:
+            print(f"{proj}")
+            context = {"p_Success":'F', "message": f"Project Title '{ptitle}' already Exists - Please create with new name."}
+            return render(request, "tasks/createproject.html",context)
+        else:
+            # Create Project
+            try:
+                newProject = Project(name=ptitle, p_type=ptype, status='A', owner=request.user)
+                newProject.save()
+
+                #Create 3 buckets for the project
+                p_bucket = Bucket(project=newProject, name='Planned', seq=10)
+                p_bucket.save()
+
+                ip_bucket = Bucket(project=newProject, name='In Progress', seq=20)
+                ip_bucket.save()
+
+                c_bucket = Bucket(project=newProject, name='Completed', seq=30)
+                c_bucket.save()
+
+                #Create User list for the project
+                p_user = UserProject(user=request.user, project=newProject, role='A')
+                p_user.save()
+
+                return HttpResponseRedirect(reverse(f"project" , args=(newProject.id,)))
+            except Exception as e:
+                context = {"p_Success":'F', "message": f"Project Title '{ptitle}' creation Failed - {e}"}
+                return render(request, "tasks/createproject.html",context)
+    else:
+        return render(request, "tasks/createproject.html",context )
+
+
+
+def home_view(request):
+
+    #Validate user - redirect them if they are nor logged-in
+    if not request.user.is_authenticated:
+        return render(request, "tasks/login.html", {"message": 'Please Login for managing Tasks'})
+
+    # Get - Current User and their projects - for side Navigation
+    userProjects = UserProject.objects.filter(user=request.user)
+
+    projectDict = {'Active_Personal':[], 'Active_Team':[], 'Archive_Personal':[],'Archive_Team':[] }
+    l_act_p_count =0
+    l_act_t_count =0
+    l_arch_p_count =0
+    l_arch_t_count =0
+    # Extract User Active
+    for uProj in userProjects:
+        if uProj.project.p_type == 'P':
+            if uProj.project.status == 'A':
+                projectDict['Active_Personal'].append({'id':uProj.project.id,'name':uProj.project.name, 'role':uProj.get_role_display() })
+                l_act_p_count = l_act_p_count+1
+            else:
+                projectDict['Archive_Personal'].append({'id':uProj.project.id,'name':uProj.project.name, 'role':uProj.get_role_display() })
+                l_arch_p_count = l_arch_p_count +1
+        else:
+            if uProj.project.status == 'A':
+                projectDict['Active_Team'].append({'id':uProj.project.id,'name':uProj.project.name, 'role':uProj.get_role_display() })
+                l_act_t_count = l_act_t_count + 1
+            else:
+                projectDict['Archive_Team'].append({'id':uProj.project.id,'name':uProj.project.name, 'role':uProj.get_role_display() })
+                l_arch_t_count = l_arch_t_count + 1
+
+    l_p_task_count = Task.objects.filter(project__in= Project.objects.filter(userproject__user = request.user, p_type='P', status='A')).count()
+    l_t_task_count = Task.objects.filter(project__in= Project.objects.filter(userproject__user = request.user, p_type='T', status='A')).count()
+    #print(f"testing if this is working {l_p_task_count}:{l_t_task_count}")
+
+    p_tasks_stat = Task.objects.filter(project__in= Project.objects.filter(userproject__user = request.user, p_type='P', status='A')).values('bucket__name').annotate(entries=Count('id')).order_by('bucket__seq')
+    t_tasks_stat = Task.objects.filter(project__in= Project.objects.filter(userproject__user = request.user, p_type='T', status='A')).values('bucket__name').annotate(entries=Count('id')).order_by('bucket__seq')
+
+    #print(f"Personal Tasks: {p_tasks_stat}")
+    #print(f"Team Tasks: {t_tasks_stat}")
+    context= {'projectDict':projectDict, 'user':request.user.username,
+                'l_act_p_count':l_act_p_count,'l_act_t_count':l_act_t_count,
+                'l_arch_p_count':l_arch_p_count,'l_arch_t_count':l_arch_t_count
+               ,'l_p_task_count':l_p_task_count,'l_t_task_count':l_t_task_count
+               , 'l_act_tot_count':l_act_p_count+l_act_t_count
+    }
+
+    return render(request, "tasks/home.html", context)
+
+
 def index(request):
 
     #Validate user - redirect them if they are nor logged-in
@@ -189,7 +281,7 @@ def updatetask(request):
                         description=l_description, assignedTo=l_assign_user, dueDate =l_duedate  )
             task = Task.objects.get(pk=l_taskid)
 
-            data =  {'success':True, 'message':f"Task: {l_title}- Updated successfully "}
+            data =  {'success':True, 'message':f"Task: '{l_title}'- Updated successfully "}
 
         request.task_create = data
         request.session['task_creation'] = data
@@ -199,6 +291,44 @@ def updatetask(request):
         return HttpResponseRedirect(reverse(f"home"))
 
 
+def deletetask(request):
+
+    if request.method == 'POST':
+        l_taskid = int(request.POST["taskid"])
+        l_title = request.POST["title"]
+        try:
+            task = Task.objects.get(pk=l_taskid)
+            task.delete()
+            data =  {'success':True, 'message':f"Task: '{l_title}'- Removed successfully "}
+        except Exception as e:
+            data =  {'success':False, 'message':f"Task: '{l_title}'- Remove Failed - {e} "}
+
+        return HttpResponse(json.dumps(data), content_type='application/json')
+
+    else:
+        return HttpResponseRedirect(reverse(f"home"))
+
+
+def movetask(request):
+    if request.method == 'POST':
+        l_taskid = int(request.POST["taskid"])
+        l_dest_bucketid = int(request.POST["dest_bucketid"])
+        l_dest_bucketname = request.POST["dest_bucketname"]
+        l_title = request.POST["title"]
+
+        try:
+            task = Task.objects.get(pk=l_taskid)
+            l_bucket = Bucket.objects.get(pk=l_dest_bucketid)
+            Task.objects.filter(pk=l_taskid).update(bucket=l_bucket)
+            data =  {'success':True, 'message':f"Task: '{l_title}'- moved to '{l_dest_bucketname}' successfully "}
+        except Exception as e:
+            data =  {'success':False, 'message':f"Task: '{l_title}'- move Failed - {e} "}
+
+        return HttpResponse(json.dumps(data), content_type='application/json')
+
+    else:
+        return HttpResponseRedirect(reverse(f"home"))
+
 def createtask(request):
 
     if request.method == 'POST':
@@ -206,23 +336,28 @@ def createtask(request):
         l_bucketid = int(request.POST["bucketid_new"])
         l_title = request.POST["title_new"]
         l_description = request.POST["desc_new"]
-        l_assignTo = request.POST["assign_new"]
         l_duedate = request.POST["duedate_new"]
         try:
             newTask = Task()
             newTask.project = Project.objects.get(pk=l_projectid)
+            if newTask.project.p_type == 'P':
+                newTask.assignedTo = request.user
+            else:
+                 l_assignTo = request.POST["assign_new"]
+                 newTask.assignedTo = User.objects.get(pk=l_assignTo)
+
             newTask.bucket = Bucket.objects.get(pk=l_bucketid)
             newTask.title = l_title
             newTask.description = l_description
             newTask.owner = request.user
             newTask.dueDate = l_duedate
-            newTask.assignedTo = User.objects.get(pk=l_assignTo)
+
 
             newTask.save()
-            data =  {'success':True, 'message':f"Task:{l_title} created successfully !!"}
+            data =  {'success':True, 'message':f"Task:'{l_title}' created successfully !!"}
         except Exception as e:
             print(f"exception {e}")
-            data =  {'success':True, 'message':f"Task:{l_title} createion Failed "}
+            data =  {'success':True, 'message':f"Task:'{l_title}' createion Failed "}
 
         request.task_create = data
         request.session['task_creation'] = data

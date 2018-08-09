@@ -34,17 +34,6 @@
         <div class="navbar-default sidebar" role="navigation">
             <div class="sidebar-nav navbar-collapse">
                 <ul class="nav" id="side-menu">
-                    <li class="sidebar-search">
-                        <div class="input-group custom-search-form">
-                            <input type="text" class="form-control" placeholder="Search...">
-                            <span class="input-group-btn">
-                                    <button class="btn btn-default" type="button">
-                                        <i class="fa fa-search"></i>
-                                    </button>
-                                </span>
-                        </div>
-                        <!-- /input-group -->
-                    </li>
                     <li>
                         <a href="{% url 'home' %}"><i class="fa fa-dashboard fa-fw"></i> Dashboard</a>
                     </li>
@@ -112,7 +101,7 @@
                     </li>
 
                     <li>
-                        <a href="tables.html"><strong><i class="fa fa-plus-circle fa-fw"></i> Create Project </strong></a>
+                        <a href="{% url 'createproject' %}"><strong><i class="fa fa-plus-circle fa-fw"></i> Create Project </strong></a>
                     </li>
                 </ul>
             </div>
@@ -126,21 +115,21 @@
             <div class="col-lg-12">
                 <h3 class="page-header">{{currentProject.name}}</h3>
                 <div id="pg_msg_area">
-                {% if task_creation %} {% if task_creation.success %}
-                <div id="msg_succ" class="alert alert-success" role="alert">
-                    {{task_creation.message}}
-                </div>
-                {% else %}
-                <div id="msg_fail" class="alert alert-danger" role="alert">
-                    {{task_creation.message}}
-                </div>
-                {% endif %} {% endif %}
+                    {% if task_creation %} {% if task_creation.success %}
+                    <div id="msg_succ" class="alert alert-success" role="alert">
+                        {{task_creation.message}}
+                    </div>
+                    {% else %}
+                    <div id="msg_fail" class="alert alert-danger" role="alert">
+                        {{task_creation.message}}
+                    </div>
+                    {% endif %} {% endif %}
                 </div>
             </div>
             <!-- /.col-lg-12 -->
         </div>
         <!-- /.row -->
-        <div class="row">
+        <div class="row row_buckets">
             {% for bucket in buckets %}
             <div class="col-lg-4" id="bucketAccordion_{{bucket.id}}">
                 <div class="panel panel-primary">
@@ -152,77 +141,85 @@
                     </div>
                     <!-- /.panel-heading -->
                     <div class="panel-body" id="bucketBody_{{bucket.id}}">
-                        {% for key, tasks in bTaskDict.items %}
-                        {%if key == bucket.name %}
-                        {% for task in tasks %}
-                       <form id="task_edit_form_{{task.id}}" action="{% url 'updatetask' %}" method="post">
-                        {% csrf_token %}
-                        <!-- /.task_edit -->
-                        <div id="task_edit_{{task.id}}" class="panel panel-default task_edit" style="display:none;">
+                        {% for key, tasks in bTaskDict.items %} {%if key == bucket.name %} {% for task in tasks %}
+                            <div id="move_whole_task_{{task.id}}">
+                                <form id="task_edit_form_{{task.id}}" action="{% url 'updatetask' %}" method="post">
+                                    {% csrf_token %}
+                                    <!-- /.task_edit -->
+                                    <div id="task_edit_{{task.id}}" class="panel panel-default task_edit" style="display:none;">
 
-                            <input name="taskid_update" type="hidden" value="{{task.id}}" required/>
-                            <input name="projectid_update" type="hidden" value="{{currentProject.id}}" required/>
+                                        <input name="taskid_update" type="hidden" value="{{task.id}}" required/>
+                                        <input name="projectid_update" type="hidden" value="{{currentProject.id}}" required/>
 
-                            <div class="panel-heading" data-toggle="collapse" data-parent="#bucketBody_{{bucket.id}}" href="#taskBody_{{task.id}}" aria-expanded="true">
-                                <input class="form-control form-control-sm" name="title_{{task.id}}" id="title_{{task.id}}" type="text" value="{{task.title}}" placeholder="{{task.title}}" />
-                            </div>
-                            <!-- /.panel-heading -->
-                            <div class="panel-body" id="taskBody_{{task.id}}">
-                                <textarea type="text" id="desc_{{task.id}}" name="desc_{{task.id}}" class="form-control" rows="3">{{task.description}}</textarea>
-                            </div>
-                            <!-- /.panel-body -->
-                            <div class="panel-footer">
-                                Assigned To:
-                                <select name="assignto_{{task.id}}" id="assignto_{{task.id}}" class="form-control form-control-sm">
-                                    {% for assign in QO_teammembers %} {% if assign.user.username == task.assignedTo %}
-                                    <option value="{{assign.user.id}}" selected>{{assign.user.username}}</option>
-                                    {% else %}
-                                    <option value="{{assign.user.id}}" selected>{{assign.user.username}}</option>
-                                    {% endif %} {% endfor %}
-                                </select>
-                                Due-Date:
-                                <input class="form-control form-control-sm" name="duedate_{{task.id}}" id="duedate_{{task.id}}" type="date" value={ {task.dueDate}} required/>
-                                <div class="pull-right">
-                                    <button type="submit" class="btn btn-primary btn-xs task_save" data-taskid="{{task.id}}"><i class="fa fa-save px-2"></i> Save </button>
-                                </div>
-                            </div>
-                        </div>                        <!-- /.task_edit -->
-                        </form>
-
-                        <!-- /.task_ro -->
-                        <div id="task_ro_{{task.id}}" class="panel panel-default task_ro">
-                            <div class="panel-heading" data-toggle="collapse" data-parent="#bucketBody_{{bucket.id}}" href="#taskBody_{{task.id}}" aria-expanded="true">
-                                <div> {{task.title}}
-                                    <div class="pull-right">
-                                        <button data-taskid={{task.id}} type="button" class="btn btn-primary btn-xs task_edit_btn"><i class="fa fa-edit px-2"></i></button>
-                                        {%if task.owner == user %}
-                                        <button type="button" class="btn btn-danger btn-xs"><i class="fa fa-times px-2"></i></button>
-                                        {% endif %}
-                                        <div class="btn-group">
-                                            <button type="button" class="btn btn-success btn-xs dropdown-toggle" data-toggle="dropdown">
-                                                <i class="fa fa-arrows-h fa-fw"></i> Move Task
-                                                <span class="caret"></span>
-                                            </button>
-                                            <ul class="dropdown-menu pull-right" role="menu">
-                                                {% for l_bucket in buckets %} {% if l_bucket.name != bucket.name %}
-                                                <li><a href="#">{{l_bucket.name}}</a></li>
-                                                {% endif %} {% endfor %}
-                                            </ul>
+                                        <div class="panel-heading" data-toggle="collapse" data-parent="#bucketBody_{{bucket.id}}" href="#taskBody_{{task.id}}" aria-expanded="true">
+                                            <input class="form-control form-control-sm" name="title_{{task.id}}" id="title_{{task.id}}" type="text" value="{{task.title}}" placeholder="{{task.title}}" />
                                         </div>
+                                        <!-- /.panel-heading -->
+                                        <div class="panel-body" id="taskBody_{{task.id}}">
+                                            <textarea type="text" id="desc_{{task.id}}" name="desc_{{task.id}}" class="form-control" rows="3">{{task.description}}</textarea>
+                                        </div>
+                                        <!-- /.panel-body -->
+                                        <div class="panel-footer">
+                                            {% if currentProject.p_type == 'T' %}
+                                            Assigned To:
+                                            <select name="assignto_{{task.id}}" id="assignto_{{task.id}}" class="form-control form-control-sm">
+                                                {% for assign in QO_teammembers %} {% if assign.user.username == task.assignedTo %}
+                                                <option value="{{assign.user.id}}" selected>{{assign.user.username}}</option>
+                                                {% else %}
+                                                <option value="{{assign.user.id}}" selected>{{assign.user.username}}</option>
+                                                {% endif %} {% endfor %}
+                                            </select>
+                                            {% endif %}
+                                            Due-Date:
+                                            <input class="form-control form-control-sm" name="duedate_{{task.id}}" id="duedate_{{task.id}}" type="date" value="{{task.dueDate}}" required/>
+                                            <div class="pull-right">
+                                                <button type="submit" class="btn btn-primary btn-xs task_save" data-taskid="{{task.id}}"><i class="fa fa-save px-2"></i> Save </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- /.task_edit -->
+                                </form>
 
+                                <!-- /.task_ro -->
+                                <div id="task_ro_{{task.id}}" class="panel panel-default task_ro">
+                                    <div class="panel-heading" data-toggle="collapse" data-parent="#bucketBody_{{bucket.id}}" href="#taskBody_{{task.id}}" aria-expanded="true">
+                                        <div> {{task.title}}
+                                            <div class="pull-right">
+                                                <button data-taskid={{task.id}} type="button" class="btn btn-primary btn-xs task_edit_btn"><i class="fa fa-edit px-2"></i></button>
+                                                {%if task.owner == user %}
+                                                <button type="button" data-title="{{task.title}}" data-taskid={{task.id}} class="btn btn-danger btn-xs task_remove_btn"><i class="fa fa-times px-2"></i></button>
+                                                {% endif %}
+                                                <div class="btn-group">
+                                                    <button type="button" class="btn btn-success btn-xs dropdown-toggle" data-toggle="dropdown">
+                                                        <i class="fa fa-arrows-h fa-fw"></i> Move Task
+                                                        <span class="caret"></span>
+                                                    </button>
+                                                    <ul class="dropdown-menu pull-right" role="menu" data-currbucketid={{bucket.id}} data-currbucketname="{{bucket.name}}">
+                                                        {% for l_bucket in buckets %} {% if l_bucket.name != bucket.name %}
+                                                        <li><a class="move_task_link" data-title="{{task.title}}" data-taskid={{task.id}} data-bucketid={{l_bucket.id}}
+                                                             data-bucketname="{{l_bucket.name}}" href="">{{l_bucket.name}}</a></li>
+                                                        {% endif %} {% endfor %}
+                                                    </ul>
+                                                </div>
+
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- /.panel-heading -->
+                                    <div class="panel-body" id="taskBody_ro_{{task.id}}">
+                                        {{task.description}}
+                                    </div>
+                                    <!-- /.panel-body -->
+                                    <div class="panel-footer" id="task_ro_footer_{{task.id}}">
+                                        {% if currentProject.p_type == 'T' %}
+                                        Assigned To: <strong>{{task.assignedTo}}</strong>
+                                        {% endif %}
+
+                                        {% if task.dueDate %} Due-Date: <strong>{{task.dueDate}}</strong> {% endif %}
                                     </div>
                                 </div>
+                                <!-- /.task_ro -->
                             </div>
-                            <!-- /.panel-heading -->
-                            <div class="panel-body" id="taskBody_ro_{{task.id}}">
-                                {{task.description}}
-                            </div>
-                            <!-- /.panel-body -->
-                            <div class="panel-footer" id="task_ro_footer_{{task.id}}">
-                                Assigned To: <strong>{{task.assignedTo}}</strong> {% if task.dueDate %} Due-Date: <strong>{{task.dueDate}}</strong> {% endif %}
-                            </div>
-                        </div>
-                        <!-- /.task_ro -->
 
                         {% endfor %}
 
@@ -234,11 +231,7 @@
 
                         {% endif %} {% endfor %}
                     </div>
-
                     <!-- /.panel-body -->
-                    <div class="panel-footer">
-                        Panel Footer
-                    </div>
 
                 </div>
                 <!-- /.panel -->
