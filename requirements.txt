@@ -73,7 +73,7 @@ python-engineio==2.2.0
 python-magic==0.4.15
 python-socketio==2.0.0
 pytz==2018.3
-PyYAML==3.12
+PyYAML==5.4
 render50==3.0.1
 requests==2.18.4
 requests-oauthlib==0.8.0
